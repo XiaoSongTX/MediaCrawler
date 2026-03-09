@@ -175,13 +175,53 @@ class ZhihuCrawler(AbstractCrawler):
                     utils.logger.info(f"[ZhihuCrawler.search] Sleeping for {config.CRAWLER_MAX_SLEEP_SEC} seconds after page {page-1}")
                     
                     page += 1
+
+                    # 对于每个搜索到的问题，根据配置决定是否获取所有回答
+                    expanded_content_list: List[ZhihuContent] = []
                     for content in content_list:
+                        # 如果是回答类型，则根据配置决定是否获取该问题的所有回答
+                        if content.content_type == "answer" and content.question_id and config.ZHIHU_GET_ALL_ANSWERS:
+                            utils.logger.info(f"[ZhihuCrawler.search] 获取问题 {content.question_id} 的所有回答")
+                            try:
+                                question_answers = await self.zhihu_client.get_all_answers_by_question(
+                                    question_id=content.question_id,
+                                    crawl_interval=config.CRAWLER_MAX_SLEEP_SEC
+                                )
+                                if question_answers:
+                                    # 确保所有回答都有问题标题和描述
+                                    for answer in question_answers:
+                                        if not answer.title and content.title:
+                                            answer.title = content.title
+                                        if not answer.desc and content.desc:
+                                            answer.desc = content.desc
+                                    expanded_content_list.extend(question_answers)
+                                    utils.logger.info(
+                                        f"[ZhihuCrawler.search] 问题 {content.question_id} 共获取到 {len(question_answers)} 个回答")
+                                else:
+                                    # 如果没有获取到回答，保留原始的回答
+                                    utils.logger.warning(
+                                        f"[ZhihuCrawler.search] 问题 {content.question_id} 未获取到额外回答，保留原始回答")
+                                    expanded_content_list.append(content)
+                            except Exception as e:
+                                utils.logger.error(
+                                    f"[ZhihuCrawler.search] 获取问题 {content.question_id} 的回答时出错: {e}")
+                                # 如果获取所有回答失败，至少保留原始的回答
+                                expanded_content_list.append(content)
+                        else:
+                            expanded_content_list.append(content)
+
+
+                    
+                    for content in expanded_content_list:
                         await zhihu_store.update_zhihu_content(content)
 
-                    await self.batch_get_content_comments(content_list)
-                except DataFetchError:
-                    utils.logger.error("[ZhihuCrawler.search] Search content error")
-                    return
+                    await self.batch_get_content_comments(expanded_content_list)
+                except DataFetchError as ex:
+                    utils.logger.error(f"[ZhihuCrawler.search] Search content error: {ex}")
+                    break
+                except Exception as ex:
+                    utils.logger.error(f"[ZhihuCrawler.search] Unknown error: {ex}")
+                    break
 
     async def batch_get_content_comments(self, content_list: List[ZhihuContent]):
         """

@@ -16,7 +16,7 @@ async def create_database_if_not_exists(db_type: str):
         server_url = f"mysql+asyncmy://{mysql_db_config['user']}:{mysql_db_config['password']}@{mysql_db_config['host']}:{mysql_db_config['port']}"
         engine = create_async_engine(server_url, echo=False)
         async with engine.connect() as conn:
-            await conn.execute(text(f"CREATE DATABASE IF NOT EXISTS {mysql_db_config['db_name']}"))
+            await conn.execute(text(f"CREATE DATABASE IF NOT EXISTS {mysql_db_config['db_name']} CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"))
         await engine.dispose()
 
 
@@ -33,11 +33,11 @@ def get_async_engine(db_type: str = None):
     if db_type == "sqlite":
         db_url = f"sqlite+aiosqlite:///{sqlite_db_config['db_path']}"
     elif db_type == "mysql" or db_type == "db":
-        db_url = f"mysql+asyncmy://{mysql_db_config['user']}:{mysql_db_config['password']}@{mysql_db_config['host']}:{mysql_db_config['port']}/{mysql_db_config['db_name']}"
+        db_url = f"mysql+asyncmy://{mysql_db_config['user']}:{mysql_db_config['password']}@{mysql_db_config['host']}:{mysql_db_config['port']}/{mysql_db_config['db_name']}?charset=utf8mb4"
     else:
         raise ValueError(f"Unsupported database type: {db_type}")
 
-    engine = create_async_engine(db_url, echo=False)
+    engine = create_async_engine(db_url, echo=False, connect_args={"charset": "utf8mb4"})
     _engines[db_type] = engine
     return engine
 

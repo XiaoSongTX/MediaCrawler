@@ -566,3 +566,64 @@ class ZhiHuClient(AbstractApiClient):
         uri = f"/zvideo/{video_id}"
         response_html = await self.get(uri, return_response=True)
         return self._extractor.extract_zvideo_content_from_html(response_html)
+
+    async def get_question_answers(
+        self,
+        question_id: str,
+        offset: int = 0,
+        limit: int = 20,
+        sort: str = "default"
+    ) -> Dict:
+        """
+        获取问题的所有回答
+        Args:
+            question_id: 问题ID
+            offset: 偏移量
+            limit: 每页数量
+            sort: 排序方式(default, updated, created)
+
+        Returns:
+
+        """
+        uri = f"/api/v4/questions/{question_id}/answers"
+        params = {
+            "include": "data[*].is_normal,content,voteup_count,comment_count,created_time,updated_time,author",
+            "limit": limit,
+            "offset": offset,
+            "sort_by": sort
+        }
+        return await self.get(uri, params)
+
+    async def get_all_answers_by_question(
+        self,
+        question_id: str,
+        crawl_interval: float = 1.0,
+        callback: Optional[Callable] = None
+    ) -> List[ZhihuContent]:
+        """
+        获取问题的所有回答
+        Args:
+            question_id: 问题ID
+            crawl_interval: 爬取一次的延迟单位（秒）
+            callback: 爬取结束后的回调函数
+
+        Returns:
+
+        """
+        all_answers: List[ZhihuContent] = []
+        is_end: bool = False
+        offset: int = 0
+        limit: int = 20
+        while not is_end:
+            res = await self.get_question_answers(question_id, offset, limit)
+            if not res:
+                break
+            paging_info = res.get("paging", {})
+            is_end = paging_info.get("is_end")
+            answers = self._extractor.extract_content_list_from_creator(res.get("data"))
+            if callback:
+                await callback(answers)
+            all_answers.extend(answers)
+            offset += limit
+            await asyncio.sleep(crawl_interval)
+        return all_answers

@@ -9,7 +9,7 @@
 # 使用本代码即表示您同意遵守上述原则和LICENSE中的所有条款。
 
 # 基础配置
-PLATFORM = "xhs"  # 平台，xhs | dy | ks | bili | wb | tieba | zhihu
+PLATFORM = "zhihu"  # 平台，xhs | dy | ks | bili | wb | tieba | zhihu
 KEYWORDS = "编程副业,编程兼职"  # 关键词搜索配置，以英文逗号分隔
 LOGIN_TYPE = "qrcode"  # qrcode or phone or cookie
 COOKIES = ""
@@ -62,7 +62,7 @@ BROWSER_LAUNCH_TIMEOUT = 30
 AUTO_CLOSE_BROWSER = True
 
 # 数据保存类型选项配置,支持四种类型：csv、db、json、sqlite, 最好保存到DB，有排重的功能。
-SAVE_DATA_OPTION = "json"  # csv or db or json or sqlite
+SAVE_DATA_OPTION = "db"  # csv or db or json or sqlite
 
 # 用户浏览器缓存的浏览器文件配置
 USER_DATA_DIR = "%s_user_data_dir"  # %s will be replaced by platform name
@@ -107,6 +107,10 @@ FONT_PATH = "./docs/STZHONGS.TTF"
 
 # 爬取间隔时间
 CRAWLER_MAX_SLEEP_SEC = 2
+
+# 知乎平台特有配置
+# 是否获取问题的所有回答，默认为False，只获取第一个回答
+ZHIHU_GET_ALL_ANSWERS = False
 
 from .bilibili_config import *
 from .xhs_config import *

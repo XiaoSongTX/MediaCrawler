@@ -338,11 +338,11 @@ def parse_creator_info_from_url(url: str) -> CreatorUrlInfo:
 
 
 if __name__ == '__main__':
-    _img_url = "https://sns-img-bd.xhscdn.com/7a3abfaf-90c1-a828-5de7-022c80b92aa3"
+    # _img_url = "https://sns-img-bd.xhscdn.com/7a3abfaf-90c1-a828-5de7-022c80b92aa3"
     # 获取一个图片地址在多个cdn下的url地址
     # final_img_urls = get_img_urls_by_trace_id(get_trace_id(_img_url))
-    final_img_url = get_img_url_by_trace_id(get_trace_id(_img_url))
-    print(final_img_url)
+    # final_img_url = get_img_url_by_trace_id(get_trace_id(_img_url))
+    # print(final_img_url)
 
     # 测试创作者URL解析
     print("\n=== 创作者URL解析测试 ===")

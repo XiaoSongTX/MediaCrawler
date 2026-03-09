@@ -57,4 +57,38 @@ class XiaoHongShuExtractor:
         info = json.loads(match.group(1).replace(":undefined", ":null"), strict=False)
         if info is None:
             return None
-        return info.get("user").get("userPageData")
+        user_info = info.get("user").get("userPageData")
+
+        # 尝试从HTML中提取IP归属地信息
+        ip_location = self._extract_ip_location_from_html(html)
+        if user_info and ip_location:
+            user_info["ip_location"] = ip_location
+
+        return user_info
+
+    def _extract_ip_location_from_html(self, html: str) -> Optional[str]:
+        """从HTML中提取IP归属地信息
+
+        Args:
+            html (str): 页面HTML内容
+
+        Returns:
+            Optional[str]: IP归属地信息
+        """
+        # 尝试从页面中提取IP归属地信息
+        # 小红书的IP归属地通常在个人资料区域显示
+        ip_location_patterns = [
+            r'IP属地(?:[:：]\s*)(.+?)<',
+            r'IP属地(?:[:：]\s*)(.+?)[\s<]',
+            r'IP属地["\s:：]+([^"<>\s]+)',
+        ]
+
+        for pattern in ip_location_patterns:
+            match = re.search(pattern, html, re.IGNORECASE)
+            if match:
+                location = match.group(1).strip()
+                # 过滤掉一些无用的信息
+                if location and not location.startswith('<') and len(location) <= 20:
+                    return location
+
+        return None
